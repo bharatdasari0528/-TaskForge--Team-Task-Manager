@@ -1,0 +1,386 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--color-background-tertiary); }
+  .app { max-width: 400px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Auth Screen */
+  .screen { display: none; flex-direction: column; flex: 1; }
+  .screen.active { display: flex; }
+
+  .auth-hero { background: #1a1a2e; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+  .auth-logo { font-size: 28px; font-weight: 700; color: #e2d9f3; letter-spacing: -1px; }
+  .auth-logo span { color: #a78bfa; }
+  .auth-tagline { font-size: 13px; color: #9ca3af; margin-top: 6px; }
+
+  .auth-form { padding: 2rem 1.5rem; background: var(--color-background-primary); flex: 1; }
+  .auth-tabs { display: flex; gap: 0; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; margin-bottom: 1.5rem; }
+  .auth-tab { flex: 1; padding: 8px; font-size: 13px; font-weight: 500; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+  .auth-tab.active { background: #1a1a2e; color: #e2d9f3; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+  .field input, .field select { width: 100%; padding: 8px 12px; font-size: 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-primary); outline: none; }
+  .field input:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
+
+  .btn-primary { width: 100%; padding: 10px; background: #1a1a2e; color: #e2d9f3; border: none; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .demo-hint { margin-top: 1rem; font-size: 12px; color: var(--color-text-tertiary); text-align: center; }
+  .demo-hint strong { color: #a78bfa; cursor: pointer; }
+
+  /* Main App */
+  .topbar { background: #1a1a2e; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: #e2d9f3; }
+  .topbar-user { display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #a78bfa; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #1a1a2e; }
+  .role-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+  .role-admin { background: #fef3c7; color: #92400e; }
+  .role-member { background: #dbeafe; color: #1e40af; }
+
+  .nav-tabs { display: flex; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .nav-tab { flex: 1; padding: 10px 4px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .nav-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
+
+  .content { flex: 1; overflow-y: auto; padding: 1rem; background: var(--color-background-tertiary); }
+
+  /* Dashboard */
+  .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .stat-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 0.85rem 1rem; }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .overdue-val { color: #dc2626; }
+
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; }
+
+  .task-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 0.85rem 1rem; margin-bottom: 8px; }
+  .task-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .task-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .s-todo { background: #f3f4f6; color: #374151; }
+  .s-inprog { background: #dbeafe; color: #1e40af; }
+  .s-done { background: #d1fae5; color: #065f46; }
+  .s-overdue { background: #fee2e2; color: #991b1b; }
+  .task-meta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 5px; }
+  .task-meta span { margin-right: 10px; }
+
+  .task-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: none; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+  .btn-sm:hover { background: var(--color-background-secondary); }
+  .btn-sm.danger:hover { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+  /* Projects */
+  .project-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1rem; margin-bottom: 10px; }
+  .project-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .project-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .progress-bar { height: 5px; background: var(--color-background-secondary); border-radius: 20px; overflow: hidden; margin-bottom: 6px; }
+  .progress-fill { height: 100%; background: #a78bfa; border-radius: 20px; transition: width 0.3s; }
+  .progress-fill.green { background: #34d399; }
+  .project-members { font-size: 11px; color: var(--color-text-tertiary); }
+
+  /* Create Task Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 90%; max-width: 360px; }
+  .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 1rem; color: var(--color-text-primary); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .btn-cancel { flex: 1; padding: 8px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: none; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); }
+  .btn-create { flex: 1; padding: 8px; background: #1a1a2e; color: #e2d9f3; border: none; border-radius: var(--border-radius-md); cursor: pointer; font-size: 13px; font-weight: 500; }
+
+  .fab { position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: #a78bfa; border: none; color: #1a1a2e; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(167,139,250,0.4); z-index: 50; transition: transform 0.15s; }
+  .fab:hover { transform: scale(1.08); }
+
+  .empty-state { text-align: center; padding: 2rem; color: var(--color-text-tertiary); font-size: 13px; }
+
+  .logout-btn { background: none; border: none; color: #9ca3af; font-size: 11px; cursor: pointer; padding: 4px 8px; border-radius: var(--border-radius-md); }
+  .logout-btn:hover { background: rgba(255,255,255,0.1); }
+</style>
+
+<!-- Auth Screen -->
+<div id="authScreen" class="screen active">
+  <div class="auth-hero">
+    <div class="auth-logo">Task<span>Forge</span></div>
+    <div class="auth-tagline">Team collaboration & project tracking</div>
+  </div>
+  <div class="auth-form">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" value="admin@demo.com" /></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" value="password" /></div>
+      <button class="btn-primary" onclick="handleLogin()">Login</button>
+    </div>
+    <div id="signupForm" style="display:none">
+      <div class="field"><label>Name</label><input type="text" id="signupName" placeholder="Your full name" /></div>
+      <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" /></div>
+      <div class="field"><label>Password</label><input type="password" id="signupPass" placeholder="Choose a password" /></div>
+      <div class="field"><label>Role</label>
+        <select id="signupRole"><option value="Member">Member</option><option value="Admin">Admin</option></select>
+      </div>
+      <button class="btn-primary" onclick="handleSignup()">Create Account</button>
+    </div>
+    <p class="demo-hint">Try: <strong onclick="demoLogin('admin')">Admin demo</strong> or <strong onclick="demoLogin('member')">Member demo</strong></p>
+  </div>
+</div>
+
+<!-- Main App Screen -->
+<div id="appScreen" class="screen" style="background: var(--color-background-tertiary);">
+  <div class="topbar">
+    <div class="topbar-title">TaskForge</div>
+    <div class="topbar-user">
+      <div class="avatar" id="userAvatar">A</div>
+      <span class="role-badge" id="userRoleBadge"></span>
+      <button class="logout-btn" onclick="logout()">Out</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="switchTab('tasks')">Tasks</button>
+    <button class="nav-tab" onclick="switchTab('projects')">Projects</button>
+    <button class="nav-tab" id="teamTabBtn" onclick="switchTab('team')">Team</button>
+  </div>
+  <div class="content" id="contentArea"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" style="display:none" onclick="openCreateTask()">+</button>
+
+<!-- Create Task Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">New task</div>
+    <div class="field"><label>Task title</label><input type="text" id="newTaskTitle" placeholder="What needs to be done?" /></div>
+    <div class="field"><label>Assign to</label>
+      <select id="newTaskAssignee"></select>
+    </div>
+    <div class="field"><label>Project</label>
+      <select id="newTaskProject"></select>
+    </div>
+    <div class="field"><label>Due date</label><input type="date" id="newTaskDue" /></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-create" onclick="createTask()">Create task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+const users = [
+  { id: 1, name: 'Alex Chen', email: 'admin@demo.com', password: 'password', role: 'Admin', initials: 'AC' },
+  { id: 2, name: 'Sam Rivera', email: 'member@demo.com', password: 'password', role: 'Member', initials: 'SR' },
+  { id: 3, name: 'Priya Nair', email: 'priya@demo.com', password: 'demo', role: 'Member', initials: 'PN' },
+];
+
+let tasks = [
+  { id: 1, title: 'Design system audit', assigneeId: 2, projectId: 1, status: 'In Progress', due: '2026-05-06', createdBy: 1 },
+  { id: 2, title: 'API endpoint tests', assigneeId: 1, projectId: 1, status: 'To Do', due: '2026-05-10', createdBy: 1 },
+  { id: 3, title: 'User onboarding flow', assigneeId: 3, projectId: 2, status: 'Done', due: '2026-04-30', createdBy: 1 },
+  { id: 4, title: 'Database migration script', assigneeId: 2, projectId: 1, status: 'Overdue', due: '2026-04-28', createdBy: 1 },
+  { id: 5, title: 'Launch blog post', assigneeId: 3, projectId: 2, status: 'To Do', due: '2026-05-15', createdBy: 1 },
+];
+
+const projects = [
+  { id: 1, name: 'Platform Revamp', members: [1, 2, 3] },
+  { id: 2, name: 'Marketing Launch', members: [1, 3] },
+  { id: 3, name: 'Internal Tools', members: [1, 2] },
+];
+
+let activeTab = 'dashboard';
+let taskIdCounter = 6;
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+}
+
+function demoLogin(type) {
+  if (type === 'admin') {
+    document.getElementById('loginEmail').value = 'admin@demo.com';
+    document.getElementById('loginPass').value = 'password';
+  } else {
+    document.getElementById('loginEmail').value = 'member@demo.com';
+    document.getElementById('loginPass').value = 'password';
+  }
+  handleLogin();
+}
+
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const user = users.find(u => u.email === email && u.password === pass);
+  if (user) { loginUser(user); }
+  else { alert('Invalid credentials. Try admin@demo.com / password'); }
+}
+
+function handleSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass = document.getElementById('signupPass').value;
+  const role = document.getElementById('signupRole').value;
+  if (!name || !email || !pass) { alert('Fill all fields'); return; }
+  if (users.find(u => u.email === email)) { alert('Email already exists'); return; }
+  const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const newUser = { id: users.length + 1, name, email, password: pass, role, initials };
+  users.push(newUser);
+  loginUser(newUser);
+}
+
+function loginUser(user) {
+  currentUser = user;
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('userAvatar').textContent = user.initials;
+  const badge = document.getElementById('userRoleBadge');
+  badge.textContent = user.role;
+  badge.className = 'role-badge ' + (user.role === 'Admin' ? 'role-admin' : 'role-member');
+  document.getElementById('fabBtn').style.display = 'flex';
+  renderContent();
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('fabBtn').style.display = 'none';
+  activeTab = 'dashboard';
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', i === 0));
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderContent();
+}
+
+function renderContent() {
+  const area = document.getElementById('contentArea');
+  if (activeTab === 'dashboard') area.innerHTML = renderDashboard();
+  else if (activeTab === 'tasks') area.innerHTML = renderTasks();
+  else if (activeTab === 'projects') area.innerHTML = renderProjects();
+  else if (activeTab === 'team') area.innerHTML = renderTeam();
+}
+
+function statusClass(s) {
+  return { 'To Do':'s-todo','In Progress':'s-inprog','Done':'s-done','Overdue':'s-overdue' }[s] || 's-todo';
+}
+
+function renderDashboard() {
+  const myTasks = tasks.filter(t => t.assigneeId === currentUser.id);
+  const done = myTasks.filter(t => t.status === 'Done').length;
+  const overdue = tasks.filter(t => t.status === 'Overdue').length;
+  const inprog = tasks.filter(t => t.status === 'In Progress').length;
+  const recent = tasks.slice(-3).reverse();
+  return `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">My tasks</div><div class="stat-value">${myTasks.length}</div><div class="stat-sub">${done} completed</div></div>
+      <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value overdue-val">${overdue}</div><div class="stat-sub">need attention</div></div>
+      <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-value">${inprog}</div><div class="stat-sub">across all projects</div></div>
+      <div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value">${projects.length}</div><div class="stat-sub">active</div></div>
+    </div>
+    <div class="section-title">Recent tasks</div>
+    ${recent.map(t => taskCardHTML(t, false)).join('')}
+  `;
+}
+
+function renderTasks() {
+  const visible = currentUser.role === 'Admin' ? tasks : tasks.filter(t => t.assigneeId === currentUser.id);
+  if (!visible.length) return '<div class="empty-state">No tasks yet. Tap + to create one.</div>';
+  return visible.map(t => taskCardHTML(t, true)).join('');
+}
+
+function taskCardHTML(t, actions) {
+  const assignee = users.find(u => u.id === t.assigneeId);
+  const proj = projects.find(p => p.id === t.projectId);
+  const canEdit = currentUser.role === 'Admin' || t.assigneeId === currentUser.id;
+  return `<div class="task-card">
+    <div class="task-header">
+      <div class="task-name">${t.title}</div>
+      <span class="status-pill ${statusClass(t.status)}">${t.status}</span>
+    </div>
+    <div class="task-meta">
+      <span>Assignee: ${assignee ? assignee.name : 'Unknown'}</span>
+      <span>Due: ${t.due}</span>
+      <span>Project: ${proj ? proj.name : '-'}</span>
+    </div>
+    ${actions && canEdit ? `<div class="task-actions">
+      ${t.status !== 'Done' ? `<button class="btn-sm" onclick="markDone(${t.id})">Mark done</button>` : ''}
+      ${t.status === 'To Do' ? `<button class="btn-sm" onclick="markInProgress(${t.id})">Start</button>` : ''}
+      ${currentUser.role === 'Admin' ? `<button class="btn-sm danger" onclick="deleteTask(${t.id})">Delete</button>` : ''}
+    </div>` : ''}
+  </div>`;
+}
+
+function markDone(id) { tasks = tasks.map(t => t.id === id ? {...t, status: 'Done'} : t); renderContent(); }
+function markInProgress(id) { tasks = tasks.map(t => t.id === id ? {...t, status: 'In Progress'} : t); renderContent(); }
+function deleteTask(id) { if (currentUser.role !== 'Admin') return; tasks = tasks.filter(t => t.id !== id); renderContent(); }
+
+function renderProjects() {
+  return projects.map(p => {
+    const projTasks = tasks.filter(t => t.projectId === p.id);
+    const done = projTasks.filter(t => t.status === 'Done').length;
+    const pct = projTasks.length ? Math.round((done / projTasks.length) * 100) : 0;
+    const members = p.members.map(id => users.find(u => u.id === id)?.name).filter(Boolean).join(', ');
+    return `<div class="project-card">
+      <div class="project-top"><div class="project-name">${p.name}</div><span style="font-size:12px;color:var(--color-text-secondary)">${pct}%</span></div>
+      <div class="progress-bar"><div class="progress-fill ${pct === 100 ? 'green' : ''}" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px">${projTasks.length} tasks · ${done} done</div>
+      <div class="project-members">Members: ${members}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTeam() {
+  if (currentUser.role !== 'Admin') return '<div class="empty-state">Team management is available to Admins only.</div>';
+  return `<div class="section-title">All members (${users.length})</div>` + users.map(u => {
+    const myT = tasks.filter(t => t.assigneeId === u.id).length;
+    const myD = tasks.filter(t => t.assigneeId === u.id && t.status === 'Done').length;
+    return `<div class="task-card">
+      <div class="task-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar" style="width:34px;height:34px;font-size:12px">${u.initials}</div>
+          <div><div class="task-name">${u.name}</div><div style="font-size:11px;color:var(--color-text-tertiary)">${u.email}</div></div>
+        </div>
+        <span class="role-badge ${u.role === 'Admin' ? 'role-admin' : 'role-member'}">${u.role}</span>
+      </div>
+      <div class="task-meta" style="margin-top:8px"><span>${myT} tasks · ${myD} done</span></div>
+    </div>`;
+  }).join('');
+}
+
+function openCreateTask() {
+  const sel = document.getElementById('newTaskAssignee');
+  sel.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  const psel = document.getElementById('newTaskProject');
+  psel.innerHTML = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('newTaskTitle').value = '';
+  document.getElementById('newTaskDue').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function createTask() {
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if (!title) { alert('Enter a task title'); return; }
+  const assigneeId = parseInt(document.getElementById('newTaskAssignee').value);
+  const projectId = parseInt(document.getElementById('newTaskProject').value);
+  const due = document.getElementById('newTaskDue').value || '2026-05-31';
+  tasks.push({ id: taskIdCounter++, title, assigneeId, projectId, status: 'To Do', due, createdBy: currentUser.id });
+  closeModal();
+  activeTab = 'tasks';
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', i === 1));
+  renderContent();
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
